@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Proveedores</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 30px;
+      background: #f4f6f8;
+    }
+
+    h1 {
+      color: #222;
+    }
+
+    .contenedor {
+      max-width: 1100px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .buscador {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+
+    #buscar {
+      flex: 1;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      font-size: 15px;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .agregar {
+      margin-bottom: 20px;
+    }
+
+    #formulario {
+      display: none;
+      background: #f8fafc;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+    }
+
+    #formulario input {
+      margin: 5px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border-bottom: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+
+    th {
+      background: #f1f5f9;
+    }
+
+    .mensaje {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="contenedor">
+
+  <h1>📋 Gestión de Proveedores</h1>
+
+  <div class="buscador">
+    <input
+      type="text"
+      id="buscar"
+      placeholder="Buscar por código, proveedor, RUC, teléfono o correo..."
+    >
+
+    <button onclick="buscarProveedores()">Buscar</button>
+
+    <button onclick="mostrarTodos()">Ver todos</button>
+  </div>
+
+  <button class="agregar" onclick="mostrarFormulario()">
+    ➕ Agregar proveedor
+  </button>
+
+  <div id="formulario">
+
+    <h2>Nuevo proveedor</h2>
+
+    <input id="codigo" placeholder="Código">
+    <input id="proveedor" placeholder="Proveedor">
+    <input id="ruc" placeholder="RUC">
+    <input id="telefono" placeholder="Teléfono">
+    <input id="correo" placeholder="Correo">
+
+    <br><br>
+
+    <button onclick="guardarProveedor()">
+      Guardar proveedor
+    </button>
+
+    <button onclick="ocultarFormulario()">
+      Cancelar
+    </button>
+
+  </div>
+
+  <div id="mensaje" class="mensaje"></div>
+
+  <table>
+
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Proveedor</th>
+        <th>RUC</th>
+        <th>Teléfono</th>
+        <th>Correo</th>
+      </tr>
+    </thead>
+
+    <tbody id="tablaProveedores">
+    </tbody>
+
+  </table>
+
+</div>
+
+<script>
+
+async function buscarProveedores() {
+
+  const texto = document.getElementById("buscar").value;
+
+  const respuesta = await fetch(
+    "/api/proveedores?q=" + encodeURIComponent(texto)
+  );
+
+  const proveedores = await respuesta.json();
+
+  mostrarProveedores(proveedores);
+}
+
+
+async function mostrarTodos() {
+
+  document.getElementById("buscar").value = "";
+
+  buscarProveedores();
+}
+
+
+function mostrarProveedores(proveedores) {
+
+  const tabla = document.getElementById("tablaProveedores");
+
+  tabla.innerHTML = "";
+
+  proveedores.forEach(p => {
+
+    const fila = document.createElement("tr");
+
+    fila.innerHTML = `
+      <td>${p.codigo || ""}</td>
+      <td>${p.proveedor || ""}</td>
+      <td>${p.ruc || ""}</td>
+      <td>${p.telefono || ""}</td>
+      <td>${p.correo || ""}</td>
+    `;
+
+    tabla.appendChild(fila);
+
+  });
+
+}
+
+
+function mostrarFormulario() {
+
+  document.getElementById("formulario").style.display = "block";
+
+}
+
+
+function ocultarFormulario() {
+
+  document.getElementById("formulario").style.display = "none";
+
+}
+
+
+async function guardarProveedor() {
+
+  const proveedor = {
+
+    codigo: document.getElementById("codigo").value,
+
+    proveedor: document.getElementById("proveedor").value,
+
+    ruc: document.getElementById("ruc").value,
+
+    telefono: document.getElementById("telefono").value,
+
+    correo: document.getElementById("correo").value
+
+  };
+
+
+  const respuesta = await fetch("/api/proveedores", {
+
+    method: "POST",
+
+    headers: {
+      "Content-Type": "application/json"
+    },
+
+    body: JSON.stringify(proveedor)
+
+  });
+
+
+  const resultado = await respuesta.json();
+
+
+  if (!respuesta.ok) {
+
+    document.getElementById("mensaje").textContent =
+      resultado.error || "Ocurrió un error.";
+
+    return;
+
+  }
+
+
+  document.getElementById("mensaje").textContent =
+    "Proveedor guardado correctamente.";
+
+  document.getElementById("codigo").value = "";
+  document.getElementById("proveedor").value = "";
+  document.getElementById("ruc").value = "";
+  document.getElementById("telefono").value = "";
+  document.getElementById("correo").value = "";
+
+  buscarProveedores();
+
+}
+
+
+buscarProveedores();
+
+</script>
+
+</body>
+</html>
