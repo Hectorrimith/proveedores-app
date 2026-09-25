@@ -810,12 +810,174 @@ function escapeHTML(text) {
 
 
 // ================================
+// LOGIN
+// ================================
+
+async function comprobarSesion() {
+
+  try {
+
+    const respuesta =
+      await fetch("/api/auth/status");
+
+    const estado =
+      await respuesta.json();
+
+    if (!estado.loggedIn) {
+
+      mostrarLogin();
+
+      return false;
+    }
+
+    return true;
+
+  } catch (error) {
+
+    console.error(error);
+
+    mostrarMensaje(
+      "No se pudo comprobar la sesión."
+    );
+
+    return false;
+  }
+}
+
+
+function mostrarLogin() {
+
+  document.body.innerHTML = `
+
+    <div style="
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      background:#f4f6f8;
+      padding:20px;
+    ">
+
+      <div style="
+        background:white;
+        padding:30px;
+        border-radius:12px;
+        width:100%;
+        max-width:400px;
+        box-shadow:0 3px 15px rgba(0,0,0,.1);
+      ">
+
+        <h2 style="text-align:center;">
+          🔐 Gestión de Proveedores
+        </h2>
+
+        <p style="text-align:center;">
+          Inicia sesión para continuar
+        </p>
+
+        <input
+          id="loginUsuario"
+          type="text"
+          placeholder="Usuario"
+        >
+
+        <input
+          id="loginPassword"
+          type="password"
+          placeholder="Contraseña"
+        >
+
+        <button
+          onclick="iniciarSesion()"
+          style="width:100%;"
+        >
+          Iniciar sesión
+        </button>
+
+        <p
+          id="loginError"
+          style="
+            color:#dc2626;
+            text-align:center;
+          "
+        ></p>
+
+      </div>
+
+    </div>
+
+  `;
+}
+
+
+async function iniciarSesion() {
+
+  const username =
+    document.getElementById(
+      "loginUsuario"
+    ).value;
+
+  const password =
+    document.getElementById(
+      "loginPassword"
+    ).value;
+
+  try {
+
+    const respuesta =
+      await fetch(
+        "/api/login",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+              username,
+              password
+            })
+        }
+      );
+
+    const resultado =
+      await respuesta.json();
+
+    if (!respuesta.ok) {
+
+      document.getElementById(
+        "loginError"
+      ).textContent =
+        resultado.error ||
+        "Credenciales incorrectas.";
+
+      return;
+    }
+
+    location.reload();
+
+  } catch (error) {
+
+    document.getElementById(
+      "loginError"
+    ).textContent =
+      "Error conectando con el servidor.";
+  }
+}
+
+
+// ================================
 // INICIO
 // ================================
 
-cargarProveedores();
+comprobarSesion()
+  .then(logueado => {
 
-</script>
+    if (logueado) {
+      cargarProveedores();
+    }
 
-</body>
-</html>
+  });
