@@ -4,285 +4,816 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Proveedores</title>
+  <title>Gestión de Proveedores</title>
 
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 30px;
-      background: #f4f6f8;
+    * {
+      box-sizing: border-box;
     }
 
-    h1 {
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
       color: #222;
     }
 
-    .contenedor {
-      max-width: 1100px;
-      margin: auto;
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    header {
+      background: #1f2937;
+      color: white;
+      padding: 20px;
+      text-align: center;
     }
 
-    .buscador {
-      display: flex;
-      gap: 10px;
+    .container {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
       margin-bottom: 20px;
     }
 
-    input {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 15px;
-    }
-
-    #buscar {
-      flex: 1;
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
     }
 
     button {
-      padding: 10px 16px;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
+      padding: 10px 16px;
       cursor: pointer;
+      font-size: 14px;
       background: #2563eb;
       color: white;
-      font-size: 15px;
     }
 
     button:hover {
-      background: #1d4ed8;
+      opacity: 0.9;
     }
 
-    .agregar {
-      margin-bottom: 20px;
+    .danger {
+      background: #dc2626;
     }
 
-    #formulario {
-      display: none;
-      background: #f8fafc;
-      padding: 20px;
+    .secondary {
+      background: #6b7280;
+    }
+
+    .success {
+      background: #16a34a;
+    }
+
+    input {
+      padding: 11px;
+      border: 1px solid #d1d5db;
       border-radius: 8px;
-      margin-bottom: 25px;
+      width: 100%;
+      margin-bottom: 10px;
     }
 
-    #formulario input {
-      margin: 5px;
+    .search {
+      display: flex;
+      gap: 10px;
+    }
+
+    .search input {
+      margin: 0;
+      flex: 1;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      margin-top: 15px;
     }
 
-    th, td {
-      border-bottom: 1px solid #ddd;
+    th,
+    td {
+      border-bottom: 1px solid #e5e7eb;
       padding: 12px;
       text-align: left;
     }
 
     th {
-      background: #f1f5f9;
+      background: #f9fafb;
     }
 
-    .mensaje {
-      margin-top: 15px;
-      font-weight: bold;
+    .hidden {
+      display: none;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .message {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      background: #eef2ff;
+    }
+
+    @media (max-width: 700px) {
+      table {
+        font-size: 12px;
+      }
+
+      .search {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 
 <body>
 
-<div class="contenedor">
+<header>
+  <h1>Gestión de Proveedores</h1>
+</header>
 
-  <h1>📋 Gestión de Proveedores</h1>
+<div class="container">
 
-  <div class="buscador">
+  <div id="mensaje" class="message hidden"></div>
+
+  <div class="card">
+
+    <div class="buttons">
+
+      <button onclick="buscarProveedores()">
+        🔎 Buscar
+      </button>
+
+      <button onclick="verTodos()" class="secondary">
+        Ver todos
+      </button>
+
+      <button onclick="mostrarFormulario()" class="success">
+        ➕ Agregar proveedor
+      </button>
+
+      <button onclick="descargarPlantilla()" class="secondary">
+        📄 Plantilla Excel
+      </button>
+
+      <button onclick="document.getElementById('excel').click()">
+        📊 Importar Excel
+      </button>
+
+      <button onclick="exportarExcel()" class="success">
+        📥 Exportar Excel
+      </button>
+
+      <button onclick="cerrarSesion()" class="danger">
+        Salir
+      </button>
+
+    </div>
+
+    <div class="search">
+      <input
+        id="busqueda"
+        type="text"
+        placeholder="Código, proveedor, RUC, teléfono o correo..."
+        onkeydown="if(event.key === 'Enter') buscarProveedores()"
+      >
+
+      <button onclick="buscarProveedores()">
+        Buscar
+      </button>
+    </div>
+
     <input
-      type="text"
-      id="buscar"
-      placeholder="Buscar por código, proveedor, RUC, teléfono o correo..."
+      id="excel"
+      type="file"
+      accept=".xlsx,.xls"
+      class="hidden"
+      onchange="importarExcel()"
     >
 
-    <button onclick="buscarProveedores()">Buscar</button>
-
-    <button onclick="mostrarTodos()">Ver todos</button>
   </div>
 
-  <button class="agregar" onclick="mostrarFormulario()">
-    ➕ Agregar proveedor
-  </button>
+  <div class="card">
 
-  <div id="formulario">
+    <table>
 
-    <h2>Nuevo proveedor</h2>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Proveedor</th>
+          <th>RUC</th>
+          <th>Teléfono</th>
+          <th>Correo</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
 
-    <input id="codigo" placeholder="Código">
-    <input id="proveedor" placeholder="Proveedor">
-    <input id="ruc" placeholder="RUC">
-    <input id="telefono" placeholder="Teléfono">
-    <input id="correo" placeholder="Correo">
+      <tbody id="tabla">
+      </tbody>
 
-    <br><br>
-
-    <button onclick="guardarProveedor()">
-      Guardar proveedor
-    </button>
-
-    <button onclick="ocultarFormulario()">
-      Cancelar
-    </button>
+    </table>
 
   </div>
 
-  <div id="mensaje" class="mensaje"></div>
+</div>
 
-  <table>
+<!-- FORMULARIO -->
 
-    <thead>
-      <tr>
-        <th>Código</th>
-        <th>Proveedor</th>
-        <th>RUC</th>
-        <th>Teléfono</th>
-        <th>Correo</th>
-      </tr>
-    </thead>
+<div id="modal" class="modal hidden">
 
-    <tbody id="tablaProveedores">
-    </tbody>
+  <div class="modal-content">
 
-  </table>
+    <h2 id="tituloFormulario">
+      Agregar proveedor
+    </h2>
+
+    <input
+      id="codigo"
+      placeholder="Código"
+    >
+
+    <input
+      id="proveedor"
+      placeholder="Nombre del proveedor"
+    >
+
+    <input
+      id="ruc"
+      placeholder="RUC"
+    >
+
+    <input
+      id="telefono"
+      placeholder="Teléfono"
+    >
+
+    <input
+      id="correo"
+      placeholder="Correo"
+    >
+
+    <div class="buttons">
+
+      <button onclick="guardarProveedor()" class="success">
+        Guardar
+      </button>
+
+      <button onclick="cerrarFormulario()" class="secondary">
+        Cancelar
+      </button>
+
+    </div>
+
+  </div>
 
 </div>
 
 <script>
 
-async function buscarProveedores() {
+let proveedorEditando = null;
 
-  const texto = document.getElementById("buscar").value;
+function mostrarMensaje(texto) {
 
-  const respuesta = await fetch(
-    "/api/proveedores?q=" + encodeURIComponent(texto)
-  );
+  const mensaje =
+    document.getElementById("mensaje");
 
-  const proveedores = await respuesta.json();
+  mensaje.textContent = texto;
 
-  mostrarProveedores(proveedores);
+  mensaje.classList.remove("hidden");
+
+  setTimeout(() => {
+    mensaje.classList.add("hidden");
+  }, 4000);
 }
 
 
-async function mostrarTodos() {
+// ================================
+// CARGAR PROVEEDORES
+// ================================
 
-  document.getElementById("buscar").value = "";
+async function cargarProveedores(q = "") {
 
-  buscarProveedores();
+  try {
+
+    const respuesta =
+      await fetch(
+        "/api/proveedores?q=" +
+        encodeURIComponent(q)
+      );
+
+    if (respuesta.status === 401) {
+
+      mostrarMensaje(
+        "Sesión no autorizada."
+      );
+
+      return;
+    }
+
+    if (!respuesta.ok) {
+
+      throw new Error(
+        "Error consultando proveedores"
+      );
+    }
+
+    const proveedores =
+      await respuesta.json();
+
+    mostrarTabla(proveedores);
+
+  } catch (error) {
+
+    console.error(error);
+
+    mostrarMensaje(
+      "No se pudieron cargar los proveedores."
+    );
+  }
 }
 
 
-function mostrarProveedores(proveedores) {
+// ================================
+// MOSTRAR TABLA
+// ================================
 
-  const tabla = document.getElementById("tablaProveedores");
+function mostrarTabla(proveedores) {
+
+  const tabla =
+    document.getElementById("tabla");
 
   tabla.innerHTML = "";
 
+  if (proveedores.length === 0) {
+
+    tabla.innerHTML = `
+      <tr>
+        <td colspan="6">
+          No se encontraron proveedores.
+        </td>
+      </tr>
+    `;
+
+    return;
+  }
+
   proveedores.forEach(p => {
 
-    const fila = document.createElement("tr");
+    const fila =
+      document.createElement("tr");
 
     fila.innerHTML = `
-      <td>${p.codigo || ""}</td>
-      <td>${p.proveedor || ""}</td>
-      <td>${p.ruc || ""}</td>
-      <td>${p.telefono || ""}</td>
-      <td>${p.correo || ""}</td>
+
+      <td>${escapeHTML(p.codigo || "")}</td>
+
+      <td>${escapeHTML(p.proveedor || "")}</td>
+
+      <td>${escapeHTML(p.ruc || "")}</td>
+
+      <td>${escapeHTML(p.telefono || "")}</td>
+
+      <td>${escapeHTML(p.correo || "")}</td>
+
+      <td>
+
+        <button
+          onclick='editarProveedor(${JSON.stringify(p)})'>
+          ✏️
+        </button>
+
+        <button
+          class="danger"
+          onclick="eliminarProveedor('${p._id}')">
+          🗑️
+        </button>
+
+      </td>
+
     `;
 
     tabla.appendChild(fila);
 
   });
-
 }
 
+
+// ================================
+// BUSCAR
+// ================================
+
+function buscarProveedores() {
+
+  const texto =
+    document
+      .getElementById("busqueda")
+      .value
+      .trim();
+
+  cargarProveedores(texto);
+}
+
+
+// ================================
+// VER TODOS
+// ================================
+
+function verTodos() {
+
+  document
+    .getElementById("busqueda")
+    .value = "";
+
+  cargarProveedores();
+}
+
+
+// ================================
+// AGREGAR / EDITAR
+// ================================
 
 function mostrarFormulario() {
 
-  document.getElementById("formulario").style.display = "block";
+  proveedorEditando = null;
 
+  document
+    .getElementById("tituloFormulario")
+    .textContent =
+    "Agregar proveedor";
+
+  limpiarFormulario();
+
+  document
+    .getElementById("modal")
+    .classList.remove("hidden");
 }
 
 
-function ocultarFormulario() {
+function editarProveedor(p) {
 
-  document.getElementById("formulario").style.display = "none";
+  proveedorEditando = p._id;
 
+  document
+    .getElementById("tituloFormulario")
+    .textContent =
+    "Editar proveedor";
+
+  document
+    .getElementById("codigo")
+    .value =
+    p.codigo || "";
+
+  document
+    .getElementById("proveedor")
+    .value =
+    p.proveedor || "";
+
+  document
+    .getElementById("ruc")
+    .value =
+    p.ruc || "";
+
+  document
+    .getElementById("telefono")
+    .value =
+    p.telefono || "";
+
+  document
+    .getElementById("correo")
+    .value =
+    p.correo || "";
+
+  document
+    .getElementById("modal")
+    .classList.remove("hidden");
 }
 
+
+function cerrarFormulario() {
+
+  document
+    .getElementById("modal")
+    .classList.add("hidden");
+}
+
+
+function limpiarFormulario() {
+
+  document
+    .getElementById("codigo")
+    .value = "";
+
+  document
+    .getElementById("proveedor")
+    .value = "";
+
+  document
+    .getElementById("ruc")
+    .value = "";
+
+  document
+    .getElementById("telefono")
+    .value = "";
+
+  document
+    .getElementById("correo")
+    .value = "";
+}
+
+
+// ================================
+// GUARDAR
+// ================================
 
 async function guardarProveedor() {
 
-  const proveedor = {
+  const datos = {
 
-    codigo: document.getElementById("codigo").value,
+    codigo:
+      document.getElementById("codigo").value,
 
-    proveedor: document.getElementById("proveedor").value,
+    proveedor:
+      document.getElementById("proveedor").value,
 
-    ruc: document.getElementById("ruc").value,
+    ruc:
+      document.getElementById("ruc").value,
 
-    telefono: document.getElementById("telefono").value,
+    telefono:
+      document.getElementById("telefono").value,
 
-    correo: document.getElementById("correo").value
-
+    correo:
+      document.getElementById("correo").value
   };
 
+  if (!datos.codigo || !datos.proveedor) {
 
-  const respuesta = await fetch("/api/proveedores", {
-
-    method: "POST",
-
-    headers: {
-      "Content-Type": "application/json"
-    },
-
-    body: JSON.stringify(proveedor)
-
-  });
-
-
-  const resultado = await respuesta.json();
-
-
-  if (!respuesta.ok) {
-
-    document.getElementById("mensaje").textContent =
-      resultado.error || "Ocurrió un error.";
+    alert(
+      "Código y proveedor son obligatorios."
+    );
 
     return;
-
   }
 
+  try {
 
-  document.getElementById("mensaje").textContent =
-    "Proveedor guardado correctamente.";
+    let respuesta;
 
-  document.getElementById("codigo").value = "";
-  document.getElementById("proveedor").value = "";
-  document.getElementById("ruc").value = "";
-  document.getElementById("telefono").value = "";
-  document.getElementById("correo").value = "";
+    if (proveedorEditando) {
 
-  buscarProveedores();
+      respuesta =
+        await fetch(
+          "/api/proveedores/" +
+          proveedorEditando,
+          {
+            method: "PUT",
 
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify(datos)
+          }
+        );
+
+    } else {
+
+      respuesta =
+        await fetch(
+          "/api/proveedores",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify(datos)
+          }
+        );
+    }
+
+    const resultado =
+      await respuesta.json();
+
+    if (!respuesta.ok) {
+
+      throw new Error(
+        resultado.error ||
+        "No se pudo guardar."
+      );
+    }
+
+    cerrarFormulario();
+
+    mostrarMensaje(
+      "Proveedor guardado correctamente."
+    );
+
+    cargarProveedores();
+
+  } catch (error) {
+
+    alert(error.message);
+  }
 }
 
 
-buscarProveedores();
+// ================================
+// ELIMINAR
+// ================================
+
+async function eliminarProveedor(id) {
+
+  const confirmar =
+    confirm(
+      "¿Seguro que quieres eliminar este proveedor?"
+    );
+
+  if (!confirmar) {
+    return;
+  }
+
+  try {
+
+    const respuesta =
+      await fetch(
+        "/api/proveedores/" + id,
+        {
+          method: "DELETE"
+        }
+      );
+
+    const resultado =
+      await respuesta.json();
+
+    if (!respuesta.ok) {
+
+      throw new Error(
+        resultado.error ||
+        "No se pudo eliminar."
+      );
+    }
+
+    mostrarMensaje(
+      "Proveedor eliminado."
+    );
+
+    cargarProveedores();
+
+  } catch (error) {
+
+    alert(error.message);
+  }
+}
+
+
+// ================================
+// EXCEL
+// ================================
+
+async function importarExcel() {
+
+  const archivo =
+    document.getElementById("excel")
+      .files[0];
+
+  if (!archivo) {
+    return;
+  }
+
+  const formData =
+    new FormData();
+
+  formData.append(
+    "archivo",
+    archivo
+  );
+
+  try {
+
+    mostrarMensaje(
+      "Importando Excel..."
+    );
+
+    const respuesta =
+      await fetch(
+        "/api/importar-excel",
+        {
+          method: "POST",
+          body: formData
+        }
+      );
+
+    const resultado =
+      await respuesta.json();
+
+    if (!respuesta.ok) {
+
+      throw new Error(
+        resultado.error ||
+        "Error importando Excel."
+      );
+    }
+
+    alert(
+      "Importación terminada.\n\n" +
+      "Nuevos: " +
+      resultado.creados +
+      "\nActualizados: " +
+      resultado.actualizados +
+      "\nErrores: " +
+      resultado.errores
+    );
+
+    cargarProveedores();
+
+  } catch (error) {
+
+    alert(error.message);
+  }
+
+  document
+    .getElementById("excel")
+    .value = "";
+}
+
+
+function exportarExcel() {
+
+  window.location.href =
+    "/api/exportar-excel";
+}
+
+
+function descargarPlantilla() {
+
+  window.location.href =
+    "/api/plantilla-excel";
+}
+
+
+// ================================
+// LOGOUT
+// ================================
+
+async function cerrarSesion() {
+
+  await fetch(
+    "/api/logout",
+    {
+      method: "POST"
+    }
+  );
+
+  location.reload();
+}
+
+
+// ================================
+// SEGURIDAD HTML
+// ================================
+
+function escapeHTML(text) {
+
+  const div =
+    document.createElement("div");
+
+  div.textContent = text;
+
+  return div.innerHTML;
+}
+
+
+// ================================
+// INICIO
+// ================================
+
+cargarProveedores();
 
 </script>
 
